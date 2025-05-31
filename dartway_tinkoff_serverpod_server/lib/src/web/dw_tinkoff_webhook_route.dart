@@ -5,9 +5,10 @@ import 'package:dartway_tinkoff_serverpod_server/dartway_tinkoff_serverpod_serve
 import 'package:dartway_tinkoff_serverpod_server/src/domain/dw_tinkoff_payment_extension.dart';
 import 'package:serverpod/serverpod.dart';
 
-typedef OnPaymentProcessedCallback = Future<void> Function(
+typedef DwOnPaymentProcessedCallback = Future<void> Function(
   Session session,
   DwTinkoffPayment payment,
+  DwTinkoffPayment updatedPayment,
   DwTinkoffRegisteredCard card,
 );
 
@@ -18,9 +19,9 @@ class DwTinkoffWebhookRoute extends Route {
     this.onRefunded,
   });
 
-  final OnPaymentProcessedCallback? onConfirmed;
+  final DwOnPaymentProcessedCallback? onConfirmed;
 
-  final OnPaymentProcessedCallback? onRefunded;
+  final DwOnPaymentProcessedCallback? onRefunded;
 
   @override
   Future<bool> handleCall(Session session, HttpRequest request) async {
@@ -134,6 +135,7 @@ class DwTinkoffWebhookRoute extends Route {
         // Вызываем кастомную обработку подтверждённой оплаты
         await onConfirmed!.call(
           session,
+          payment,
           updatedPayment,
           updatedCard,
         );
@@ -142,6 +144,7 @@ class DwTinkoffWebhookRoute extends Route {
         // Если оплата была возвращена, то удаляем карту
         await onRefunded!.call(
           session,
+          payment,
           updatedPayment,
           updatedCard,
         );
