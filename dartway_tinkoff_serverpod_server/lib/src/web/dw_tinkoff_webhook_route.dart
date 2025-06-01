@@ -77,6 +77,9 @@ class DwTinkoffWebhookRoute extends Route {
         print(
           '${error == null ? (paymentUpdated ? 'Success with' : 'Skipped') : 'Failed on'} Tinkoff webhook: ${error ?? 'payment ${body?['PaymentId']} ${body?['Status']}'}',
         );
+        if (error != null) {
+          print(errorDetails);
+        }
 
         await DwTinkoffLog.db.insertRow(
           session,
