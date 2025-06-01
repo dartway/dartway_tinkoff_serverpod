@@ -123,7 +123,7 @@ class DwTinkoffWebhookRoute extends Route {
       // Ищем оплату по PaymentId
       final payment = await DwTinkoffPayment.db.findFirstRow(
         session,
-        where: (t) => t.tinkoffPaymentId.equals(body!['PaymentId']!),
+        where: (t) => t.tinkoffPaymentId.equals(body!['PaymentId']!.toString()),
       );
 
       if (payment == null) {
