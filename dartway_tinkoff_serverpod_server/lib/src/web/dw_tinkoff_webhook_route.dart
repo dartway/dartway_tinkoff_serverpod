@@ -12,20 +12,27 @@ typedef DwOnPaymentProcessedCallback = Future<void> Function(
   DwTinkoffRegisteredCard card,
 );
 
+typedef DwPaymentUpdatesFilter = Future<bool> Function(Session session,
+    DwTinkoffPayment payment, DwTinkoffPaymentStatus newStatus);
+
 /// Класс маршрута для обработки вебхуков от Тинькофф
 class DwTinkoffWebhookRoute extends Route {
   DwTinkoffWebhookRoute({
-    this.onConfirmed,
+    this.filter,
+    required this.onConfirmed,
     this.onRefunded,
   });
 
-  final DwOnPaymentProcessedCallback? onConfirmed;
+  final DwPaymentUpdatesFilter? filter;
+
+  final DwOnPaymentProcessedCallback onConfirmed;
 
   final DwOnPaymentProcessedCallback? onRefunded;
 
   @override
   Future<bool> handleCall(Session session, HttpRequest request) async {
     Map<String, dynamic>? body;
+    bool paymentUpdated = false;
 
     Future<DwTinkoffRegisteredCard> updateCard({
       required String tinkoffCustomerId,
@@ -67,7 +74,7 @@ class DwTinkoffWebhookRoute extends Route {
     }) async {
       try {
         print(
-          '${error == null ? 'Success' : 'Fail'} with Tinkoff webhook body: ${error ?? 'payment ${body?['PaymentId']} ${body?['Status']}'}',
+          '${error == null ? (paymentUpdated ? 'Success with' : 'Skipped') : 'Failed on'} Tinkoff webhook: ${error ?? 'payment ${body?['PaymentId']} ${body?['Status']}'}',
         );
 
         await DwTinkoffLog.db.insertRow(
@@ -121,19 +128,32 @@ class DwTinkoffWebhookRoute extends Route {
         );
       }
 
+      if (filter != null &&
+          false ==
+              await filter!(
+                session,
+                payment,
+                DwTinkoffPaymentExtension.paymentStatusFromTinkoffRawStatus(
+                  body['Status'],
+                ),
+              )) {
+        // Если фильтр не пропускает обновление, просто отвечаем OK
+        return respond();
+      }
+
       // Обновляем оплату по данным из вебхука
       final updatedPayment = await session.db.updateRow(
         payment.updateFromWebhook(webhookJsonBody: body),
       );
+      paymentUpdated = true;
 // Обновляем или создаём зарегистрированную карту
       final updatedCard = await updateCard(
         tinkoffCustomerId: payment.tinkoffCustomerId,
       );
 
-      if (onConfirmed != null &&
-          updatedPayment.tinkoffStatus == DwTinkoffPaymentStatus.confirmed) {
+      if (updatedPayment.tinkoffStatus == DwTinkoffPaymentStatus.confirmed) {
         // Вызываем кастомную обработку подтверждённой оплаты
-        await onConfirmed!.call(
+        await onConfirmed.call(
           session,
           payment,
           updatedPayment,

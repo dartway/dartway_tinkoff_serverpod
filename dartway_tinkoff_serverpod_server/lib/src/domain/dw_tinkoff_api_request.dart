@@ -4,8 +4,8 @@ import 'package:dartway_tinkoff_serverpod_server/src/domain/dw_tinkoff_payment_e
 import 'package:dartway_tinkoff_serverpod_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
-import '../domain/dw_tinkoff_operation_initiator_type.dart';
 import '../utils/dw_tinkoff_http_client.dart'; // подключаем SimpleHttpResponse
+import 'dw_tinkoff_operation_initiator_type.dart';
 
 /// Объект описывает один конкретный вызов API Тинькофф:
 /// - какой метод вызвать (`method`)
@@ -34,14 +34,18 @@ class DwTinkoffApiRequest<T> {
   /// - `SimpleHttpResponse` — упрощённый HTTP-ответ
   ///
   /// Возвращает значение типа `T`, либо `null` в случае ошибки.
-  final Future<T?> Function(Session session, SimpleHttpResponse response)
-      processResponse;
+  final Future<T?> Function(
+    Session session,
+    Map<String, dynamic> requestParams,
+    SimpleHttpResponse response,
+  ) processResponse;
 
   /// Используется ли данный метод с webhook-нотификациями
   final bool withWebHooks;
 
   /// Универсальная функция для boolean-ответов (Success == true && HTTP 200)
-  static Future<bool> _isOk(Session _, SimpleHttpResponse response) async {
+  static Future<bool> _isOk(
+      Session _, Map<String, dynamic> __, SimpleHttpResponse response) async {
     final json = jsonDecode(response.body);
     return response.statusCode == 200 && json['Success'] == true;
   }
@@ -99,10 +103,11 @@ class DwTinkoffApiRequest<T> {
           if (receiptData != null) 'Receipt': receiptData,
         },
         withWebHooks: true,
-        processResponse: (session, response) async {
+        processResponse: (session, requestParams, response) async {
           return await session.db.insertRow(
             DwTinkoffPaymentExtension.fromInitPaymentResponse(
               orderIdentifier: orderIdentifier,
+              initPaymentRequestParams: requestParams,
               initPaymentResponseBody: jsonDecode(response.body),
             ),
           );

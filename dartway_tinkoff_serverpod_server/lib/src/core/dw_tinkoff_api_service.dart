@@ -6,8 +6,8 @@ import 'package:dartway_tinkoff_serverpod_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../domain/dw_tinkoff_api_method_extension.dart';
+import '../domain/dw_tinkoff_api_request.dart';
 import '../utils/dw_tinkoff_http_client.dart';
-import 'dw_tinkoff_api_request.dart';
 
 /// Сервис для отправки подписанных запросов к API Тинькофф
 class DwTinkoffService {
@@ -79,6 +79,7 @@ class DwTinkoffService {
 
     return await request.processResponse(
       session,
+      request.params,
       response,
     );
   }

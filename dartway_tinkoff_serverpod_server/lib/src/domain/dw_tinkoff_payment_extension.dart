@@ -8,7 +8,7 @@ extension DwTinkoffPaymentExtension on DwTinkoffPayment {
     return copyWith(
       updatedAt: updatedAt,
       tinkoffRawStatus: webhookJsonBody['Status'],
-      tinkoffStatus: _paymentStatusFromTinkoffRawStatus(
+      tinkoffStatus: paymentStatusFromTinkoffRawStatus(
         webhookJsonBody['Status'],
       ),
     );
@@ -17,15 +17,16 @@ extension DwTinkoffPaymentExtension on DwTinkoffPayment {
   /// Создание платежа из ответа Init
   static DwTinkoffPayment fromInitPaymentResponse({
     required String orderIdentifier,
+    required Map<String, dynamic> initPaymentRequestParams,
     required dynamic initPaymentResponseBody,
   }) =>
       DwTinkoffPayment(
-        tinkoffCustomerId: initPaymentResponseBody['CustomerKey'],
+        tinkoffCustomerId: initPaymentRequestParams['CustomerKey'],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         terminalKey: initPaymentResponseBody['TerminalKey'],
         tinkoffRawStatus: initPaymentResponseBody['Status'],
-        tinkoffStatus: _paymentStatusFromTinkoffRawStatus(
+        tinkoffStatus: paymentStatusFromTinkoffRawStatus(
             initPaymentResponseBody['Status']),
         tinkoffPaymentId: initPaymentResponseBody['PaymentId'].toString(),
         orderIdentifier: orderIdentifier,
@@ -34,7 +35,7 @@ extension DwTinkoffPaymentExtension on DwTinkoffPayment {
       );
 
   /// Получение корректного статуса из строки
-  static DwTinkoffPaymentStatus _paymentStatusFromTinkoffRawStatus(
+  static DwTinkoffPaymentStatus paymentStatusFromTinkoffRawStatus(
       String? value) {
     if (value == null) return DwTinkoffPaymentStatus.unknown;
     return _paymentStatusMap[value.toUpperCase()] ??
