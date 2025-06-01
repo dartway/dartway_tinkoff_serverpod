@@ -71,6 +71,7 @@ class DwTinkoffWebhookRoute extends Route {
     /// Отвечает OK на запрос (обязательно "OK" в ответе — это требование Тинькофф)
     Future<bool> respond({
       String? error,
+      String? errorDetails,
     }) async {
       try {
         print(
@@ -89,7 +90,7 @@ class DwTinkoffWebhookRoute extends Route {
             isOk: error == null,
             statusCode: null,
             error: error,
-            errorDetails: error == null ? null : StackTrace.current.toString(),
+            errorDetails: errorDetails,
           ),
         );
 
@@ -171,9 +172,10 @@ class DwTinkoffWebhookRoute extends Route {
       }
 
       return respond();
-    } catch (e) {
+    } catch (e, st) {
       return respond(
         error: e.toString(),
+        errorDetails: st.toString(),
       );
     }
   }
