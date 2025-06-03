@@ -24,7 +24,7 @@ extension DwTinkoffPaymentExtension on DwTinkoffPayment {
         tinkoffCustomerId: initPaymentRequestParams['CustomerKey'],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        terminalKey: initPaymentResponseBody['TerminalKey'],
+        terminalKey: initPaymentRequestParams['TerminalKey'],
         tinkoffRawStatus: initPaymentResponseBody['Status'],
         tinkoffStatus: paymentStatusFromTinkoffRawStatus(
             initPaymentResponseBody['Status']),

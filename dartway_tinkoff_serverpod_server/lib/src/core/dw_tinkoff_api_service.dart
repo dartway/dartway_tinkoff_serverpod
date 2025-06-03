@@ -57,8 +57,6 @@ class DwTinkoffService {
             'Ошибка ${response.statusCode} ${response.reasonPhrase} при выполнении запроса ${request.method.name}'
         : null;
 
-    if (errorMessage != null) session.log(errorMessage);
-
     await DwTinkoffLog.db.insertRow(
       session,
       DwTinkoffLog(
@@ -77,9 +75,14 @@ class DwTinkoffService {
       ),
     );
 
+    if (errorMessage != null) {
+      session.log(errorMessage);
+      return null;
+    }
+
     return await request.processResponse(
       session,
-      request.params,
+      payload,
       response,
     );
   }
