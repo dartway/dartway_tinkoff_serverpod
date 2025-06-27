@@ -9,7 +9,7 @@ typedef DwOnPaymentProcessedCallback = Future<void> Function(
   Session session,
   DwTinkoffPayment payment,
   DwTinkoffPayment updatedPayment,
-  DwTinkoffRegisteredCard card,
+  DwTinkoffRegisteredCard? card,
 );
 
 typedef DwPaymentUpdatesFilter = Future<bool> Function(Session session,
@@ -34,7 +34,7 @@ class DwTinkoffWebhookRoute extends Route {
     Map<String, dynamic>? body;
     bool paymentUpdated = false;
 
-    Future<DwTinkoffRegisteredCard> updateCard({
+    Future<DwTinkoffRegisteredCard?> updateCard({
       required String tinkoffCustomerId,
     }) async {
       // Достаём карточные данные
@@ -43,7 +43,7 @@ class DwTinkoffWebhookRoute extends Route {
       final pan = body['Pan']?.toString() ?? '';
 
       if (cardId.isEmpty || rebillId.isEmpty || pan.isEmpty) {
-        throw Exception('Missing card data');
+        return null;
       }
 
       var card = await DwTinkoffRegisteredCard.db.findFirstRow(
